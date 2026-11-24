@@ -214,7 +214,10 @@ void AP_Beacon_Nooploop::parse_node_frame2()
 
     set_vehicle_position(pos_m, pos_err);
 
-    const uint8_t valid_nodes = _msgbuf[NOOPLOOP_NODE_FRAME2_VALID_NODES];
+    // node blocks are 13 bytes and the widest read is at offset+4, so only 11
+    // complete blocks fit in _msgbuf; clamp the wire value before indexing
+    const uint8_t max_nodes = (NOOPLOOP_MSG_BUF_MAX - NOOPLOOP_NODE_FRAME2_NODE_BLOCK - 5) / 13 + 1;
+    const uint8_t valid_nodes = MIN(_msgbuf[NOOPLOOP_NODE_FRAME2_VALID_NODES], max_nodes);
     for (uint8_t i = 0; i < valid_nodes; i++) {
         uint16_t offset = NOOPLOOP_NODE_FRAME2_NODE_BLOCK + i * 13;
         uint8_t id = _msgbuf[offset+1]; //nooploop id starts from 0, increments clockwise, 0 -> 1 define Y axis.
